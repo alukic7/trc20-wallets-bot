@@ -139,9 +139,9 @@ bot.onText(/\/balance/, async (msg) => {
     try {
         for (const address of addresses) {
             totalBalance += await fetchBalance(address);
+            bot.sendMessage(msg.chat.id, `${address}: ${totalBalance}\n\n`);
         }
-        bot.sendMessage(msg.chat.id, `
-        💰 Total balance in USDT is: ${totalBalance.toFixed(2)}`);
+        bot.sendMessage(msg.chat.id, `💰 Total balance in USDT is: ${totalBalance.toFixed(2)}`);
 
     } catch (error) {
         bot.sendMessage(msg.chat.id, "⚠️ Error retrieving balances.");
