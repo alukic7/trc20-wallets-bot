@@ -138,8 +138,9 @@ bot.onText(/\/balance/, async (msg) => {
 
     try {
         for (const address of addresses) {
-            totalBalance += await fetchBalance(address);
-            bot.sendMessage(msg.chat.id, `${address}: ${totalBalance}\n\n`);
+            const currBalance =  await fetchBalance(address);
+            totalBalance += currBalance;
+            bot.sendMessage(msg.chat.id, `${address}: ${currBalance}\n\n`);
         }
         bot.sendMessage(msg.chat.id, `💰 Total balance in USDT is: ${totalBalance.toFixed(2)}`);
 
