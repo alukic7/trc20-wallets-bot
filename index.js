@@ -6,7 +6,7 @@ const axios = require('axios');
 const bot = new TelegramApi(token, {polling: true});
 
 const allowedUsers = [977385108, 7540947010];
-const wallets = new Set();
+const wallets = new Map();
 let addingMode = false;
 
 bot.setMyCommands([
@@ -79,73 +79,84 @@ bot.onText(/\/done/, (msg) => {
 });
 
 bot.on('message', (msg) => {
-    if(!isUserAllowed(msg)) return;
-    if(!addingMode) return;
+    if (!isUserAllowed(msg)) return;
+    if (!addingMode) return;
 
     const chatId = msg.chat.id;
     const text = msg.text.trim();
 
     if (text.startsWith('/')) return;
 
-    if (!text.startsWith('T')) {
+    const parts = text.split(/\s+/);
+    if (parts.length < 2) {
+        bot.sendMessage(chatId, "⚠️ Please provide both the wallet name and the TRC20 wallet address in the format: <walletName> <address>");
+        return;
+    }
+
+    const [walletName, address] = parts;
+
+    if (!address.startsWith('T')) {
         bot.sendMessage(chatId, "⚠️ Invalid TRC20 wallet address. Please try again.");
         return;
     }
 
-    if (wallets.has(text)) {
-        bot.sendMessage(chatId, "🔄 Address already added.");
+    if (wallets.has(walletName)) {
+        bot.sendMessage(chatId, "🔄 Wallet name already exists.");
     } else {
-        wallets.add(text);
-        bot.sendMessage(chatId, `✅ Address added: ${text}`);
+        wallets.set(walletName, address);
+        bot.sendMessage(chatId, `✅ Wallet added: ${walletName} → ${address}`);
     }
-})
+});
 
 bot.onText(/\/list/, (msg) => {
     if (!isUserAllowed(msg)) return;
-    const addresses = Array.from(wallets);
+    const chatId = msg.chat.id;
+
+    const addresses = Array.from(wallets, ([walletName, address]) => `${walletName}: ${address}`);
 
     if (addresses.length === 0) {
-        bot.sendMessage(msg.chat.id, "🚫 No wallet addresses stored. Use /add to add some.");
+        bot.sendMessage(chatId, "🚫 No wallet addresses stored. Use /add to add some.");
     } else {
-        bot.sendMessage(msg.chat.id, `📋 Stored wallet addresses:\n\n${addresses.join("\n\n")}`);
+        bot.sendMessage(chatId, `📋 Stored wallet addresses:\n\n${addresses.join("\n")}`);
     }
 });
 
 bot.onText(/\/remove (.+)/, (msg, match) => {
     if (!isUserAllowed(msg)) return;
-    const addressToRemove = match[1].trim();
+    const chatId = msg.chat.id;
+    const walletNameToRemove = match[1].trim();
 
-    if (wallets.has(addressToRemove)) {
-        wallets.delete(addressToRemove);
-        bot.sendMessage(msg.chat.id, `❌ Removed address: ${addressToRemove}`);
+    if (wallets.has(walletNameToRemove)) {
+        wallets.delete(walletNameToRemove);
+        bot.sendMessage(chatId, `❌ Removed wallet: ${walletNameToRemove}`);
     } else {
-        bot.sendMessage(msg.chat.id, "⚠️ Address not found in the stored wallets.");
+        bot.sendMessage(chatId, "⚠️ Wallet not found in the stored wallets.");
     }
 });
 
 bot.onText(/\/balance/, async (msg) => {
     if (!isUserAllowed(msg)) return;
+    const chatId = msg.chat.id;
 
-    const addresses = Array.from(wallets);
-    if (addresses.length === 0) {
-        bot.sendMessage(msg.chat.id, "🚫 No wallet addresses stored. Use /add to add some.");
+    const walletsArray = Array.from(wallets.entries());
+    if (walletsArray.length === 0) {
+        bot.sendMessage(chatId, "🚫 No wallet addresses stored. Use /add to add some.");
         return;
     }
 
-    bot.sendMessage(msg.chat.id, "⏳ Fetching balances, please wait...");
+    bot.sendMessage(chatId, "⏳ Fetching balances, please wait...");
 
     let totalBalance = 0;
     let message = ``;
 
     try {
-        for (const address of addresses) {
-            const currBalance =  await fetchBalance(address);
+        for (const [walletName, address] of walletsArray) {
+            const currBalance = await fetchBalance(address);
             totalBalance += currBalance;
-            message += `${addresses.indexOf(address)+1}. ${address}: ${currBalance.toFixed(0)} USDT\n\n`;
+            message += `${walletName} (${address}): ${currBalance.toFixed(0)}\n\n`;
         }
-        bot.sendMessage(msg.chat.id, `${message}\n💰 Total balance in USDT is: ${totalBalance.toFixed(0)}`);
-
+        bot.sendMessage(chatId, `${message}\n💰 Total balance in USDT is: ${totalBalance.toFixed(0)}`);
     } catch (error) {
-        bot.sendMessage(msg.chat.id, "⚠️ Error retrieving balances.");
+        bot.sendMessage(chatId, "⚠️ Error retrieving balances.");
     }
 });
