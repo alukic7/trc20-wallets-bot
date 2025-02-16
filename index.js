@@ -5,7 +5,7 @@ const API_KEY = process.env.TRONSCAN_API_KEY;
 const axios = require('axios');
 const bot = new TelegramApi(token, {polling: true});
 
-const allowedUsers = [977385108, 5916857662];
+const allowedUsers = [977385108, 7540947010];
 const wallets = new Set();
 let addingMode = false;
 
