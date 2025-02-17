@@ -149,14 +149,22 @@ bot.onText(/\/balance/, async (msg) => {
     let totalBalance = 0;
     let message = ``;
 
+    const numberToEmoji = (num) => {
+        const emojiNumbers = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+        return num.toString().split('').map(digit => emojiNumbers[parseInt(digit)]).join('');
+    };
+
     try {
-        for (const [walletName, address] of walletsArray) {
+        for (let i = 0; i < walletsArray.length; i++) {
+            const [walletName, address] = walletsArray[i];
             const currBalance = await fetchBalance(address);
             totalBalance += currBalance;
-            message += `${walletsArray.indexOf(address)+1} ${walletName} (${address}): ${currBalance.toFixed(0)}\n\n`;
+            message += `${numberToEmoji(i + 1)} ${walletName} (${address}): ${currBalance.toFixed(0)}\n\n`;
         }
         bot.sendMessage(chatId, `${message}\n💰 Total balance in USDT is: ${totalBalance.toFixed(0)}`);
     } catch (error) {
         bot.sendMessage(chatId, "⚠️ Error retrieving balances.");
     }
 });
+
+
