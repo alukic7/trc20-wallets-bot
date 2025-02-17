@@ -153,7 +153,7 @@ bot.onText(/\/balance/, async (msg) => {
         for (const [walletName, address] of walletsArray) {
             const currBalance = await fetchBalance(address);
             totalBalance += currBalance;
-            message += `${walletName} (${address}): ${currBalance.toFixed(0)}\n\n`;
+            message += `${walletsArray.indexOf(address)+1} ${walletName} (${address}): ${currBalance.toFixed(0)}\n\n`;
         }
         bot.sendMessage(chatId, `${message}\n💰 Total balance in USDT is: ${totalBalance.toFixed(0)}`);
     } catch (error) {
