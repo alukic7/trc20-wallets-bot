@@ -5,7 +5,7 @@ const API_KEY = process.env.TRONSCAN_API_KEY;
 const axios = require('axios');
 const bot = new TelegramApi(token, {polling: true});
 
-const allowedUsers = [977385108, 7540947010];
+const allowedUsers = [977385108, 7540947010, 7529522452, 7649862662];
 const wallets = new Map();
 let addingMode = false;
 
@@ -166,5 +166,3 @@ bot.onText(/\/balance/, async (msg) => {
         bot.sendMessage(chatId, "⚠️ Error retrieving balances.");
     }
 });
-
-
